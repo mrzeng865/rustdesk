@@ -140,3 +140,34 @@ func (l *Login) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, nil)
 
 }
+
+// CheckToken 验证 token 是否有效，只返回 valid 状态
+// @Tags 登录
+// @Summary 验证 token
+// @Description 检查 token 是否有效
+// @Accept  json
+// @Produce  json
+// @Param token query string true "JWT Token"
+// @Success 200 {object} map[string]bool
+// @Failure 401 {object} map[string]bool
+// @Router /check_token [get]
+func (l *Login) CheckToken(c *gin.Context) {
+	tokenStr := c.Query("token")
+
+	//验证 token 的签名和有效期
+	userId, err := service.AllService.UserService.VerifyJWT(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
+		return
+	}
+	//检查 token 是否在数据库存在
+	u := &model.User{IdModel: model.IdModel{Id: userId}}  // 注意这里
+	uuid := service.AllService.UserService.GetUuidByToken(u, tokenStr)
+	if uuid == "null" {
+		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
+		return
+	}
+
+	//返回合法
+	c.JSON(http.StatusOK, gin.H{"valid": true})
+}

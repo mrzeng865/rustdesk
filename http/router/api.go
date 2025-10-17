@@ -37,6 +37,7 @@ func ApiInit(g *gin.Engine) {
 		frg.GET("/login-options", l.LoginOptions)
 		frg.POST("/login", l.Login)
 
+		frg.GET("/check_token", l.CheckToken)
 	}
 
 	{

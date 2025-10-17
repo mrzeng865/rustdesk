@@ -188,7 +188,7 @@ func (us *UserService) GetUuidByToken(u *model.User, token string) string {
 	ut := &model.UserToken{}
 	err := DB.Where("user_id = ? and token = ?", u.Id, token).First(ut).Error
 	if err != nil {
-		return ""
+		return "null"
 	}
 	return ut.DeviceUuid
 }
@@ -200,7 +200,7 @@ func (us *UserService) Logout(u *model.User, token string) error {
 	if err != nil {
 		return err
 	}
-	if uuid != "" {
+	if uuid != "" && uuid != "null" {
 		AllService.PeerService.UuidUnbindUserId(uuid, u.Id)
 	}
 	return nil
@@ -212,6 +212,8 @@ func (us *UserService) Delete(u *model.User) error {
 	if userCount <= 1 && us.IsAdmin(u) {
 		return errors.New("The last admin user cannot be deleted")
 	}
+	// 删除所有关联的Token
+	us.FlushToken(u);
 	tx := DB.Begin()
 	// 删除用户
 	if err := tx.Delete(u).Error; err != nil {
