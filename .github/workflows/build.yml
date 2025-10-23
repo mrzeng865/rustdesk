@@ -16,9 +16,9 @@ on:
         required: false
         default: ''
       SKIP_DOCKER_HUB:
-        description: 'Set to true to skip pushing to Docker Hub (default: false)'
+        description: 'Set to true to skip pushing to Docker Hub (default: true)'
         required: false
-        default: 'false'
+        default: 'true'
       SKIP_GHCR:
         description: 'Set to true to skip pushing to GHCR (default: false)'
         required: false
@@ -38,7 +38,7 @@ env:
   BASE_IMAGE_NAMESPACE: ${{ github.event.inputs.BASE_IMAGE_NAMESPACE || github.actor }}
   DOCKERHUB_IMAGE_NAMESPACE: ${{ github.event.inputs.DOCKERHUB_IMAGE_NAMESPACE || github.actor }}
   GHCR_IMAGE_NAMESPACE: ${{ github.event.inputs.GHCR_IMAGE_NAMESPACE || github.actor }}
-  SKIP_DOCKER_HUB: ${{ github.event.inputs.SKIP_DOCKER_HUB || 'false' }}
+  SKIP_DOCKER_HUB: ${{ github.event.inputs.SKIP_DOCKER_HUB || 'true' }}
   SKIP_GHCR: ${{ github.event.inputs.SKIP_GHCR || 'false' }}
 jobs:
   build:
@@ -52,6 +52,7 @@ jobs:
           - { platform: "arm64", goos: "linux", file_ext: "tar.gz" }
           - { platform: "armv7l", goos: "linux", file_ext: "tar.gz" }
           - { platform: "amd64", goos: "windows", file_ext: "zip" }
+          - { platform: "i386", goos: "linux", file_ext: "tar.gz" }
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -124,12 +125,17 @@ jobs:
                 tar -xf armv7l-linux-musleabihf-cross.tgz
                 export PATH=$PATH:$PWD/armv7l-linux-musleabihf-cross/bin
                 GOOS=${{ matrix.job.goos }} GOARCH=arm GOARM=7 CC=armv7l-linux-musleabihf-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/apimain ./cmd/apimain.go
+            elif [ "${{ matrix.job.platform }}" = "i386" ] || [ "${{ matrix.job.platform }}" = "386" ]; then
+              wget https://musl.ljw.red/i686-linux-musl-cross.tgz
+              tar -xf i686-linux-musl-cross.tgz
+              export PATH=$PATH:$PWD/i686-linux-musl-cross/bin
+              GOOS=${{ matrix.job.goos }} GOARCH=386 CC=i686-linux-musl-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/apimain ./cmd/apimain.go
             else
-              sudo apt-get install musl musl-dev musl-tools -y
-              GOOS=${{ matrix.job.goos }} GOARCH=${{ matrix.job.platform }} CC=musl-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/apimain ./cmd/apimain.go
+                sudo apt-get install musl musl-dev musl-tools -y
+                GOOS=${{ matrix.job.goos }} GOARCH=${{ matrix.job.platform }} CC=musl-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/apimain ./cmd/apimain.go
+              fi
+              tar -czf ${{ matrix.job.goos}}-${{ matrix.job.platform }}.${{matrix.job.file_ext}} ./release
             fi
-            tar -czf ${{ matrix.job.goos}}-${{ matrix.job.platform }}.${{matrix.job.file_ext}} ./release
-          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -163,6 +169,7 @@ jobs:
           - { platform: "amd64", goos: "linux", debian_platform: "amd64", crossbuild_package: ""}
           - { platform: "arm64", goos: "linux", debian_platform: "arm64", crossbuild_package: "crossbuild-essential-arm64" }
           - { platform: "armv7l", goos: "linux", debian_platform: "armhf", crossbuild_package: "crossbuild-essential-armhf" }
+          - { platform: "i386", goos: "linux", debian_platform: "i386", crossbuild_package: "crossbuild-essential-i386" }
     steps:
 
       - name: Checkout
@@ -236,6 +243,7 @@ jobs:
           - { platform: "amd64", goos: "linux",  docker_platform: "linux/amd64" }
           - { platform: "arm64", goos: "linux",  docker_platform: "linux/arm64" }
           - { platform: "armv7l", goos: "linux",  docker_platform: "linux/arm/v7" }
+          - { platform: "i386", goos: "linux",  docker_platform: "linux/386" }
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -339,7 +347,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: "."
-          file: ./Dockerfile
+          file: ./Dockerfile_full_s6
           platforms: ${{ matrix.job.docker_platform }}
           push: true
           provenance: false
@@ -386,7 +394,8 @@ jobs:
           base-image: ${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}
           extra-images: ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-amd64,
             ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-armv7l,
-            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-arm64
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-arm64,
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-i386
           push: true
 
       - name: Create and push manifest GHCR (:version)
@@ -396,7 +405,8 @@ jobs:
           base-image: ghcr.io/${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}
           extra-images: ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-amd64,
             ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-armv7l,
-            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-arm64
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-arm64,
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-i386
           push: true
           amend: true
 
@@ -407,7 +417,8 @@ jobs:
           base-image: ${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:latest
           extra-images: ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-amd64,
             ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-armv7l,
-            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-arm64
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-arm64,
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-i386
           push: true
 
       - name: Create and push manifest GHCR (:latest)
@@ -417,7 +428,8 @@ jobs:
           base-image: ghcr.io/${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:latest
           extra-images: ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-amd64,
             ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-armv7l,
-            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-arm64
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-arm64,
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-i386
           push: true
           amend: true
 
@@ -428,7 +440,8 @@ jobs:
           base-image: ${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:full-s6
           extra-images: ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-amd64,
             ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-armv7l,
-            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-arm64
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-arm64,
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-i386
           push: true
           amend: true
 
@@ -439,6 +452,7 @@ jobs:
           base-image: ghcr.io/${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:full-s6
           extra-images: ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-amd64,
             ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-armv7l,
-            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-arm64
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-arm64,
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-i386
           push: true
           amend: true
