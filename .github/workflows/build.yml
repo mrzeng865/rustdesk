@@ -238,7 +238,7 @@ jobs:
           - { platform: "amd64", goos: "linux",  docker_platform: "linux/amd64" }
           - { platform: "arm64", goos: "linux",  docker_platform: "linux/arm64" }
           - { platform: "armv7l", goos: "linux",  docker_platform: "linux/arm/v7" }
-          - { platform: "i386", goos: "linux",  docker_platform: "linux/i386" }
+          - { platform: "i386", goos: "linux",  docker_platform: "linux/386" }
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
