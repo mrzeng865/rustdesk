@@ -125,12 +125,17 @@ jobs:
                 tar -xf armv7l-linux-musleabihf-cross.tgz
                 export PATH=$PATH:$PWD/armv7l-linux-musleabihf-cross/bin
                 GOOS=${{ matrix.job.goos }} GOARCH=arm GOARM=7 CC=armv7l-linux-musleabihf-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/apimain ./cmd/apimain.go
+            elif [ "${{ matrix.job.platform }}" = "i386" ] || [ "${{ matrix.job.platform }}" = "386" ]; then
+              wget https://musl.ljw.red/i686-linux-musl-cross.tgz
+              tar -xf i686-linux-musl-cross.tgz
+              export PATH=$PATH:$PWD/i686-linux-musl-cross/bin
+              GOOS=${{ matrix.job.goos }} GOARCH=386 CC=i686-linux-musl-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/apimain ./cmd/apimain.go
             else
-              sudo apt-get install musl musl-dev musl-tools -y
-              GOOS=${{ matrix.job.goos }} GOARCH=${{ matrix.job.platform }} CC=musl-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/apimain ./cmd/apimain.go
+                sudo apt-get install musl musl-dev musl-tools -y
+                GOOS=${{ matrix.job.goos }} GOARCH=${{ matrix.job.platform }} CC=musl-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/apimain ./cmd/apimain.go
+              fi
+              tar -czf ${{ matrix.job.goos}}-${{ matrix.job.platform }}.${{matrix.job.file_ext}} ./release
             fi
-            tar -czf ${{ matrix.job.goos}}-${{ matrix.job.platform }}.${{matrix.job.file_ext}} ./release
-          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
