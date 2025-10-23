@@ -52,6 +52,7 @@ jobs:
           - { platform: "arm64", goos: "linux", file_ext: "tar.gz" }
           - { platform: "armv7l", goos: "linux", file_ext: "tar.gz" }
           - { platform: "amd64", goos: "windows", file_ext: "zip" }
+          - { platform: "i386", goos: "linux", file_ext: "tar.gz" }
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -163,6 +164,7 @@ jobs:
           - { platform: "amd64", goos: "linux", debian_platform: "amd64", crossbuild_package: ""}
           - { platform: "arm64", goos: "linux", debian_platform: "arm64", crossbuild_package: "crossbuild-essential-arm64" }
           - { platform: "armv7l", goos: "linux", debian_platform: "armhf", crossbuild_package: "crossbuild-essential-armhf" }
+          - { platform: "i386", goos: "linux", debian_platform: "i386", crossbuild_package: "crossbuild-essential-i386" }
     steps:
 
       - name: Checkout
@@ -236,6 +238,7 @@ jobs:
           - { platform: "amd64", goos: "linux",  docker_platform: "linux/amd64" }
           - { platform: "arm64", goos: "linux",  docker_platform: "linux/arm64" }
           - { platform: "armv7l", goos: "linux",  docker_platform: "linux/arm/v7" }
+          - { platform: "i386", goos: "linux",  docker_platform: "linux/i386" }
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -386,7 +389,8 @@ jobs:
           base-image: ${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}
           extra-images: ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-amd64,
             ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-armv7l,
-            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-arm64
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-arm64,
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-i386
           push: true
 
       - name: Create and push manifest GHCR (:version)
@@ -396,7 +400,8 @@ jobs:
           base-image: ghcr.io/${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}
           extra-images: ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-amd64,
             ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-armv7l,
-            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-arm64
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-arm64,
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:${{ env.TAG }}-i386
           push: true
           amend: true
 
@@ -407,7 +412,8 @@ jobs:
           base-image: ${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:latest
           extra-images: ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-amd64,
             ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-armv7l,
-            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-arm64
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-arm64,
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:latest-i386
           push: true
 
       - name: Create and push manifest GHCR (:latest)
@@ -417,7 +423,8 @@ jobs:
           base-image: ghcr.io/${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:latest
           extra-images: ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-amd64,
             ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-armv7l,
-            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-arm64
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-arm64,
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:latest-i386
           push: true
           amend: true
 
@@ -428,7 +435,8 @@ jobs:
           base-image: ${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:full-s6
           extra-images: ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-amd64,
             ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-armv7l,
-            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-arm64
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-arm64,
+            ${{ env.DOCKERHUB_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-i386
           push: true
           amend: true
 
@@ -439,6 +447,7 @@ jobs:
           base-image: ghcr.io/${{ env.BASE_IMAGE_NAMESPACE }}/rustdesk-api:full-s6
           extra-images: ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-amd64,
             ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-armv7l,
-            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-arm64
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-arm64,
+            ghcr.io/${{ env.GHCR_IMAGE_NAMESPACE }}/rustdesk-api:full-s6-i386
           push: true
           amend: true
