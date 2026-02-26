@@ -1,0 +1,38 @@
+name: build-and-push-api-image
+
+on:
+  push:
+    branches:
+      - feature/user-device-limit
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.dev
+          push: true
+          tags: ghcr.io/id-zyh/rustdesk-api:custom
+          build-args: |
+            FRONTEND_GIT_REPO=https://github.com/ID-ZYH/rustdesk-api-web.git
+            FRONTEND_GIT_BRANCH=feature/user-device-limit
