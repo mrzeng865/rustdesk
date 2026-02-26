@@ -74,6 +74,20 @@ func (l *Login) Login(c *gin.Context) {
 		f.DeviceInfo.Type = model.LoginLogClientWeb
 	}
 
+	// ✅ 登录前：设备绑定/限额检查（失败直接拒绝登录）
+	if err := service.AllService.UserDeviceService.EnsureBoundOrReject(
+		u,
+		f.Uuid,
+		f.Id,
+		f.DeviceInfo.Name,
+		f.DeviceInfo.Os,
+		f.DeviceInfo.Type,
+		c.ClientIP(),
+	); err != nil {
+		response.Error(c, response.TranslateMsg(c, err.Error()))
+		return
+	}
+
 	ut := service.AllService.UserService.Login(u, &model.LoginLog{
 		UserId:   u.Id,
 		Client:   f.DeviceInfo.Type,
@@ -82,12 +96,6 @@ func (l *Login) Login(c *gin.Context) {
 		Ip:       c.ClientIP(),
 		Type:     model.LoginLogTypeAccount,
 		Platform: f.DeviceInfo.Os,
-	})
-
-	c.JSON(http.StatusOK, apiResp.LoginRes{
-		AccessToken: ut.Token,
-		Type:        "access_token",
-		User:        *(&apiResp.UserPayload{}).FromUser(u),
 	})
 }
 

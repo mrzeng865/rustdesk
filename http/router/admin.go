@@ -38,6 +38,7 @@ func Init(g *gin.Engine) {
 	AddressBookCollectionBind(adg)
 	AddressBookCollectionRuleBind(adg)
 	UserTokenBind(adg)
+	UserDeviceBind(adg) // ✅ 新增
 
 	//deprecated by ConfigBind
 	//rs := &admin.Rustdesk{}
@@ -321,4 +322,14 @@ func ShareRecordBind(rg *gin.RouterGroup) {
 		aR.POST("/batchDelete", cont.BatchDelete)
 	}
 
+}
+
+func UserDeviceBind(rg *gin.RouterGroup) {
+	aR := rg.Group("/user_device").Use(middleware.AdminPrivilege())
+	{
+		cont := &admin.UserDevice{}
+		aR.GET("/list", cont.List)
+		aR.POST("/setLimit", cont.SetLimit)
+		aR.POST("/unbind", cont.Unbind)
+	}
 }

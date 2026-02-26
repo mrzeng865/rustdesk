@@ -12,6 +12,10 @@ type User struct {
 	IsAdmin  *bool      `json:"is_admin" gorm:"default:0;not null;"`
 	Status   StatusCode `json:"status" gorm:"default:1;not null;"`
 	Remark   string     `json:"remark" gorm:"default:'';not null;"`
+
+	// 最大允许绑定设备数（默认 1）
+	MaxDevices uint `json:"max_devices" gorm:"default:1;not null;"`
+
 	TimeModel
 }
 
