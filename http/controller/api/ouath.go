@@ -95,6 +95,20 @@ func (o *Oauth) OidcAuthQueryPre(c *gin.Context) (*model.User, *model.UserToken)
 	// 删除 OAuth 缓存
 	service.AllService.OauthService.DeleteOauthCache(q.Code)
 
+	// ✅ 登录前：设备绑定/限额检查（失败直接拒绝登录）
+	if err := service.AllService.UserDeviceService.EnsureBoundOrReject(
+		u,
+		v.Uuid,
+		v.Id,
+		v.DeviceName,
+		v.DeviceOs,
+		v.DeviceType,
+		c.ClientIP(),
+	); err != nil {
+		response.Error(c, response.TranslateMsg(c, err.Error()))
+		return nil, nil
+	}
+
 	// 创建登录日志并生成用户令牌
 	ut = service.AllService.UserService.Login(u, &model.LoginLog{
 		UserId:   u.Id,

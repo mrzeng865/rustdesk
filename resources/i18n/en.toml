@@ -158,3 +158,8 @@ other = "Banned."
 description = "Register success, wait admin confirm."
 one = "Register success, wait admin confirm."
 other = "Register success, wait admin confirm."
+
+[DeviceLimitExceeded]
+description = "Device limit exceeded."
+one = "Device limit exceeded. Please contact the administrator to unbind a device."
+other = "Device limit exceeded. Please contact the administrator to unbind a device."

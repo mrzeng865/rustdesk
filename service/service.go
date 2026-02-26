@@ -13,6 +13,7 @@ type Service struct {
 	//AdminService     *AdminService
 	//AdminRoleService *AdminRoleService
 	*UserService
+	*UserDeviceService // 新增
 	*AddressBookService
 	*TagService
 	*PeerService
