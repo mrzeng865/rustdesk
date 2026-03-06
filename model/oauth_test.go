@@ -5,38 +5,53 @@ import (
 	"testing"
 )
 
-func TestOidcUser_ToOauthUser_EmailVerified(t *testing.T) {
-	tests := []struct {
-		name          string
-		emailVerified string // raw JSON value
-		want          bool
-	}{
-		{"boolean true", `true`, true},
-		{"boolean false", `false`, false},
-		{"string true", `"true"`, true},
-		{"string false", `"false"`, false},
-		{"string True (case-insensitive)", `"True"`, true},
-		{"string TRUE (case-insensitive)", `"TRUE"`, true},
-		{"null", `null`, false},
-		{"absent (nil)", ``, false},
+func TestOidcUser_ToOauthUser_EmailVerifiedBoolTrue(t *testing.T) {
+	u := &OidcUser{VerifiedEmail: json.RawMessage(`true`)}
+	if !u.ToOauthUser().VerifiedEmail {
+		t.Fatal("expected true for JSON boolean true")
 	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var raw json.RawMessage
-			if tt.emailVerified != "" {
-				raw = json.RawMessage(tt.emailVerified)
-			}
-			u := &OidcUser{
-				OauthUserBase:     OauthUserBase{Name: "Test", Email: "test@example.com"},
-				Sub:               "sub123",
-				VerifiedEmail:     raw,
-				PreferredUsername: "testuser",
-			}
-			got := u.ToOauthUser()
-			if got.VerifiedEmail != tt.want {
-				t.Errorf("VerifiedEmail = %v, want %v (input: %s)", got.VerifiedEmail, tt.want, tt.emailVerified)
-			}
-		})
+func TestOidcUser_ToOauthUser_EmailVerifiedBoolFalse(t *testing.T) {
+	u := &OidcUser{VerifiedEmail: json.RawMessage(`false`)}
+	if u.ToOauthUser().VerifiedEmail {
+		t.Fatal("expected false for JSON boolean false")
+	}
+}
+
+func TestOidcUser_ToOauthUser_EmailVerifiedStringTrue(t *testing.T) {
+	u := &OidcUser{VerifiedEmail: json.RawMessage(`"true"`)}
+	if !u.ToOauthUser().VerifiedEmail {
+		t.Fatal("expected true for JSON string \"true\"")
+	}
+}
+
+func TestOidcUser_ToOauthUser_EmailVerifiedStringFalse(t *testing.T) {
+	u := &OidcUser{VerifiedEmail: json.RawMessage(`"false"`)}
+	if u.ToOauthUser().VerifiedEmail {
+		t.Fatal("expected false for JSON string \"false\"")
+	}
+}
+
+func TestOidcUser_ToOauthUser_EmailVerifiedStringCaseInsensitive(t *testing.T) {
+	for _, s := range []string{`"True"`, `"TRUE"`} {
+		u := &OidcUser{VerifiedEmail: json.RawMessage(s)}
+		if !u.ToOauthUser().VerifiedEmail {
+			t.Fatalf("expected true for %s", s)
+		}
+	}
+}
+
+func TestOidcUser_ToOauthUser_EmailVerifiedNull(t *testing.T) {
+	u := &OidcUser{VerifiedEmail: json.RawMessage(`null`)}
+	if u.ToOauthUser().VerifiedEmail {
+		t.Fatal("expected false for JSON null")
+	}
+}
+
+func TestOidcUser_ToOauthUser_EmailVerifiedAbsent(t *testing.T) {
+	u := &OidcUser{}
+	if u.ToOauthUser().VerifiedEmail {
+		t.Fatal("expected false when email_verified field is absent")
 	}
 }
