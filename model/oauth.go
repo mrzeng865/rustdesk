@@ -131,7 +131,8 @@ func (ou *OidcUser) ToOauthUser() *OauthUser {
 	}
 
 	// email_verified may be a JSON boolean or a JSON string depending on the provider.
-	verifiedEmail := strings.Trim(string(ou.VerifiedEmail), `"`) == "true"
+	// When the field is absent or null, ou.VerifiedEmail is nil and defaults to false.
+	verifiedEmail := strings.EqualFold(strings.Trim(string(ou.VerifiedEmail), `"`), "true")
 
 	return &OauthUser{
 		OpenId:        ou.Sub,
