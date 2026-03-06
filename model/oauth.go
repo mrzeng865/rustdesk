@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -112,7 +113,10 @@ type OauthUserBase struct {
 type OidcUser struct {
 	OauthUserBase
 	Sub               string `json:"sub"`
-	VerifiedEmail     bool   `json:"email_verified"`
+	// VerifiedEmail is declared as json.RawMessage because some OIDC providers
+	// (e.g. Amazon Cognito) return email_verified as a JSON string ("true"/"false")
+	// instead of a JSON boolean, which violates the OIDC Core spec (section 5.1).
+	VerifiedEmail     json.RawMessage `json:"email_verified"`
 	PreferredUsername string `json:"preferred_username"`
 	Picture           string `json:"picture"`
 }
@@ -126,12 +130,16 @@ func (ou *OidcUser) ToOauthUser() *OauthUser {
 		username = strings.ToLower(ou.Email)
 	}
 
+	// email_verified may be a JSON boolean or a JSON string depending on the provider.
+	// When the field is absent or null, ou.VerifiedEmail is nil and defaults to false.
+	verifiedEmail := strings.EqualFold(strings.Trim(string(ou.VerifiedEmail), `"`), "true")
+
 	return &OauthUser{
 		OpenId:        ou.Sub,
 		Name:          ou.Name,
 		Username:      username,
 		Email:         ou.Email,
-		VerifiedEmail: ou.VerifiedEmail,
+		VerifiedEmail: verifiedEmail,
 		Picture:       ou.Picture,
 	}
 }
