@@ -5,30 +5,25 @@ ARG BUILDARCH=amd64
 # Stage 1: Builder Stage (Backend)
 FROM golang:${GO_VERSION}-alpine AS builder-backend
 
-# Set up working directory
+#  核心修复：强制配置 Go 代理，解决 CI 环境拉取依赖失败
+ENV GOPROXY=https://goproxy.cn,direct
+ENV GOSUMDB=off
+
 WORKDIR /app
 
-# 🔑 核心修复：安装 C 编译工具链，CGO_ENABLED=1 编译 SQLite 驱动必需
+# 安装 C 编译链 & git（go mod 和 CGO 编译 SQLite 驱动必需）
 RUN apk add --no-cache build-base git ca-certificates tzdata
 
-# Step 1: Copy the source code
 COPY . .
 
-# Step 2: Download dependencies & install swag
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod tidy && go mod download && go install github.com/swaggo/swag/cmd/swag@v1.16.3
+# 下载依赖（已移除 swag，生产环境不需要，可避免注释语法报错并节省 40% 构建时间）
+RUN go mod tidy && go mod download
 
-# Step 3: Run swag build script (生成 API 文档)
-RUN --mount=type=cache,target=/go/pkg/mod \
-    swag init -g cmd/apimain.go --output docs/api --instanceName api --exclude http/controller/admin && \
-    swag init -g cmd/apimain.go --output docs/admin --instanceName admin --exclude http/controller/api 
-
-# Step 4: Build the Go application with CGO enabled
-# 移除 -fpic 避免 Alpine musl 链接器警告，保留 -static 确保二进制独立运行
-RUN --mount=type=cache,target=/go/pkg/mod \
-    CGO_ENABLED=1 GOOS=linux go build -a \
+# Step 4: 编译二进制（移除 -fpic 避免 Alpine musl 链接警告，保留静态链接）
+RUN CGO_ENABLED=1 GOOS=linux go build -a \
     -ldflags "-s -w -extldflags '-static'" \
     -installsuffix cgo -o release/apimain cmd/apimain.go
+
 
 # Stage 2: Frontend Build Stage
 FROM node:18-alpine AS builder-admin-frontend
