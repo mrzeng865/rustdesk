@@ -119,11 +119,15 @@ type OidcUser struct {
 
 func (ou *OidcUser) ToOauthUser() *OauthUser {
 	var username string
-	// 使用 PreferredUsername，如果不存在，降级到 Email 前缀
+	// 优先级：PreferredUsername > Name(昵称) > Email > Sub兜底
 	if ou.PreferredUsername != "" {
 		username = ou.PreferredUsername
-	} else {
+	} else if ou.Name != "" {
+		username = ou.Name // 飞书/钉钉等国内 OIDC 默认返回昵称在此字段
+	} else if ou.Email != "" {
 		username = strings.ToLower(ou.Email)
+	} else {
+		username = "oidc_" + ou.Sub // 绝对兜底，防 DB uniqueIndex 报错
 	}
 
 	return &OauthUser{
