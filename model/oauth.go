@@ -9,7 +9,6 @@ import (
 const OIDC_DEFAULT_SCOPES = "openid,profile,email"
 
 const (
-	// make sure the value shouldbe lowercase
 	OauthTypeGithub  string = "github"
 	OauthTypeGoogle  string = "google"
 	OauthTypeOidc    string = "oidc"
@@ -19,7 +18,6 @@ const (
 	PKCEMethodPlain  string = "plain"
 )
 
-// Validate the oauth type
 func ValidateOauthType(oauthType string) error {
 	switch oauthType {
 	case OauthTypeGithub, OauthTypeGoogle, OauthTypeOidc, OauthTypeWebauth, OauthTypeLinuxdo:
@@ -41,7 +39,6 @@ type Oauth struct {
 	OauthType    string `json:"oauth_type"`
 	ClientId     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
-	//RedirectUrl  string `json:"redirect_url"`
 	AutoRegister *bool  `json:"auto_register"`
 	Scopes       string `json:"scopes"`
 	Issuer       string `json:"issuer"`
@@ -50,7 +47,6 @@ type Oauth struct {
 	TimeModel
 }
 
-// Helper function to format oauth info, it's used in the update and create method
 func (oa *Oauth) FormatOauthInfo() error {
 	oauthType := strings.TrimSpace(oa.OauthType)
 	err := ValidateOauthType(oa.OauthType)
@@ -65,14 +61,11 @@ func (oa *Oauth) FormatOauthInfo() error {
 	case OauthTypeLinuxdo:
 		oa.Op = OauthTypeLinuxdo
 	}
-	// check if the op is empty, set the default value
 	op := strings.TrimSpace(oa.Op)
 	if op == "" && oauthType == OauthTypeOidc {
 		oa.Op = OauthTypeOidc
 	}
-	// check the issuer, if the oauth type is google and the issuer is empty, set the issuer to the default value
 	issuer := strings.TrimSpace(oa.Issuer)
-	// If the oauth type is google and the issuer is empty, set the issuer to the default value
 	if oauthType == OauthTypeGoogle && issuer == "" {
 		oa.Issuer = IssuerGoogle
 	}
@@ -109,40 +102,27 @@ type OauthUserBase struct {
 	Email string `json:"email"`
 }
 
-// OidcUser 接收 OIDC Provider 返回的 UserInfo JSON
 type OidcUser struct {
 	OauthUserBase
 	Sub               string `json:"sub"`
 	VerifiedEmail     bool   `json:"email_verified"`
 	PreferredUsername string `json:"preferred_username"`
 	Picture           string `json:"picture"`
-	Nickname          string `json:"nickname"`          // 兼容飞书可能返回的 nickname 字段
-	DisplayName       string `json:"display_name"`      // 兼容部分企业微信/钉钉
 }
 
+//  核心修改：飞书 OIDC 用户名降级映射逻辑
 func (ou *OidcUser) ToOauthUser() *OauthUser {
 	var username string
-	
-	// 优先级降级链
+	// 优先级：标准字段 -> 飞书昵称 -> 邮箱 -> 兜底ID
 	if ou.PreferredUsername != "" {
 		username = ou.PreferredUsername
 	} else if ou.Name != "" {
-		username = ou.Name
-	} else if ou.Nickname != "" {
-		username = ou.Nickname
-	} else if ou.DisplayName != "" {
-		username = ou.DisplayName
+		username = ou.Name // 飞书默认返回昵称
 	} else if ou.Email != "" {
 		username = strings.ToLower(ou.Email)
 	} else {
 		username = "oidc_" + ou.Sub
 	}
-
-	//  防重后缀：飞书多人同名会导致 uniqueIndex 冲突，自动加时间戳后缀保证唯一
-	username = fmt.Sprintf("%s_%d", username, time.Now().UnixNano()%10000)
-
-	//  临时调试日志：登录成功后会在 docker logs 中打印实际解析结果
-	fmt.Printf("[OIDC DEBUG] sub=%s, name=%s, username_resolved=%s\n", ou.Sub, ou.Name, username)
 
 	return &OauthUser{
 		OpenId:        ou.Sub,
@@ -153,7 +133,6 @@ func (ou *OidcUser) ToOauthUser() *OauthUser {
 		Picture:       ou.Picture,
 	}
 }
-
 
 type GithubUser struct {
 	OauthUserBase
@@ -188,7 +167,7 @@ func (lu *LinuxdoUser) ToOauthUser() *OauthUser {
 		Name:          lu.Name,
 		Username:      strings.ToLower(lu.Username),
 		Email:         lu.Email,
-		VerifiedEmail: true, // linux.do 用户邮箱默认已验证
+		VerifiedEmail: true,
 		Picture:       lu.Avatar,
 	}
 }
