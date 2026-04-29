@@ -109,26 +109,40 @@ type OauthUserBase struct {
 	Email string `json:"email"`
 }
 
+// OidcUser 接收 OIDC Provider 返回的 UserInfo JSON
 type OidcUser struct {
 	OauthUserBase
 	Sub               string `json:"sub"`
 	VerifiedEmail     bool   `json:"email_verified"`
 	PreferredUsername string `json:"preferred_username"`
 	Picture           string `json:"picture"`
+	Nickname          string `json:"nickname"`          // 兼容飞书可能返回的 nickname 字段
+	DisplayName       string `json:"display_name"`      // 兼容部分企业微信/钉钉
 }
 
 func (ou *OidcUser) ToOauthUser() *OauthUser {
 	var username string
-	// 优先级：PreferredUsername > Name(昵称) > Email > Sub兜底
+	
+	// 优先级降级链
 	if ou.PreferredUsername != "" {
 		username = ou.PreferredUsername
 	} else if ou.Name != "" {
-		username = ou.Name // 飞书/钉钉等国内 OIDC 默认返回昵称在此字段
+		username = ou.Name
+	} else if ou.Nickname != "" {
+		username = ou.Nickname
+	} else if ou.DisplayName != "" {
+		username = ou.DisplayName
 	} else if ou.Email != "" {
 		username = strings.ToLower(ou.Email)
 	} else {
-		username = "oidc_" + ou.Sub // 绝对兜底，防 DB uniqueIndex 报错
+		username = "oidc_" + ou.Sub
 	}
+
+	//  防重后缀：飞书多人同名会导致 uniqueIndex 冲突，自动加时间戳后缀保证唯一
+	username = fmt.Sprintf("%s_%d", username, time.Now().UnixNano()%10000)
+
+	//  临时调试日志：登录成功后会在 docker logs 中打印实际解析结果
+	fmt.Printf("[OIDC DEBUG] sub=%s, name=%s, username_resolved=%s\n", ou.Sub, ou.Name, username)
 
 	return &OauthUser{
 		OpenId:        ou.Sub,
@@ -139,6 +153,7 @@ func (ou *OidcUser) ToOauthUser() *OauthUser {
 		Picture:       ou.Picture,
 	}
 }
+
 
 type GithubUser struct {
 	OauthUserBase
