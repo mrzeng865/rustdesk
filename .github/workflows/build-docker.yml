@@ -35,14 +35,6 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/rustdesk-api:feishu-fix
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      # 👇 新增：构建前下载官方 Web Client 2 静态文件
-      - name: Download Web Client 2
-        run: |
-          mkdir -p webclient2
-          # 下载最新 Release（若想固定版本，将 latest 改为具体版本号如 v2.0.0）
-          curl -L https://github.com/rustdesk/rustdesk-web/releases/latest/download/webclient2.tar.gz | tar -xz -C webclient2 --strip-components=1
-          # 清理无关文件减小镜像体积
-          rm -rf webclient2/.git webclient2/node_modules webclient2/.github
-          echo "✅ webclient2 已就绪: $(find webclient2 -type f | wc -l) files"
+
 
 
