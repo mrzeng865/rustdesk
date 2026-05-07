@@ -84,9 +84,7 @@ RUN file /app/apimain && \
     mkdir -p /app/data && \
     mkdir -p /app/runtime# ... 前面的编译/复制步骤保持不变 ...
 
-# 👇 新增：将下载好的 webclient2 打包进镜像
-COPY webclient2/ /app/webclient2/
-RUN chmod -R 755 /app/webclient2 && chown -R 1000:1000 /app/webclient2
+
 
 # ... 后面的 EXPOSE/ENTRYPOINT 保持不变 ...
 
