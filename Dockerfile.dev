@@ -1,40 +1,6 @@
 # Use build arguments for Go version and architecture
-# ================= 阶段 1：编译前端 Web Client =================
-FROM node:18-alpine AS frontend-builder
-WORKDIR /build
-# 直接拉取官方配套前端源码
-RUN git clone https://github.com/lejianwen/rustdesk-api-web.git . && \
-    npm install && \
-    # 如有自定义 API 地址需求，可在此替换 .env.production
-    # RUN echo 'VITE_API_URL=/api/' > .env.production
-    npm run build
-
-# ================= 阶段 2：编译 Go 后端 API =================
-FROM golang:1.22-alpine AS backend-builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-# 你的 OIDC 修复代码已在仓库中，直接编译
-RUN CGO_ENABLED=1 GOOS=linux go build -ldflags "-s -w" -o apimain cmd/apimain.go
-
-# ================= 阶段 3：最终运行镜像 =================
-FROM alpine:latest
-WORKDIR /app
-
-# 复制后端二进制
-COPY --from=backend-builder /app/apimain /app/apimain
-# 👇 关键：复制前端编译产物到镜像指定目录
-COPY --from=frontend-builder /build/dist /app/webclient2
-RUN mkdir -p /app/logs && chmod -R 777 /app/logs && \
-    apk add --no-cache libc6-compat ca-certificates tzdata && \
-    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-EXPOSE 21114
-ENTRYPOINT ["/app/apimain"]
-
 ARG GO_VERSION=1.22
 ARG BUILDARCH=amd64
-
 # Stage 1: Builder Stage
 # FROM golang:${GO_VERSION}-alpine AS builder
 FROM crazymax/xgo:latest AS builder-backend
