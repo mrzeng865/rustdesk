@@ -77,6 +77,9 @@ COPY --from=builder-backend /app/resources /app/resources/
 COPY --from=builder-backend /app/docs /app/docs/
 # Copy frontend build from builder2 stage
 COPY --from=builder-admin-frontend /frontend/dist/ /app/resources/admin/
+# 🔧 修复 Issue #495：将管理后台所有静态文件中的 /webclient2 替换为 /webclient
+RUN find /app/resources/admin -type f \( -name "*.js" -o -name "*.html" -o -name "*.css" \) \
+    -exec sed -i 's|/webclient2|/webclient|g' {} + || true
 
 # Ensure the binary is correctly built and linked
 RUN file /app/apimain && \
