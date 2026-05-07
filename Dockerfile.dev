@@ -26,10 +26,9 @@ WORKDIR /app
 COPY --from=backend-builder /app/apimain /app/apimain
 # 👇 关键：复制前端编译产物到镜像指定目录
 COPY --from=frontend-builder /build/dist /app/webclient2
+RUN chmod +x /app/apimain && \
     mkdir -p /app/data /app/logs /app/conf && \
     apk add --no-cache libc6-compat ca-certificates tzdata && \
-RUN chmod +x /app/apimain && \
-
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 EXPOSE 21114
