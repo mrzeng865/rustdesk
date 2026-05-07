@@ -40,7 +40,7 @@ ARG BUILDARCH=amd64
 
 # Stage 1: Builder Stage
 # FROM golang:${GO_VERSION}-alpine AS builder
-FROM crazymax/xgo:${GO_VERSION} AS builder-backend
+FROM crazymax/xgo:latest AS builder-backend
 
 # Set up working directory
 WORKDIR /app
