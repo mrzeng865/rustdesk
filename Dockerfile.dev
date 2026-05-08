@@ -81,6 +81,10 @@ COPY --from=builder-backend /app/resources /app/resources/
 COPY --from=builder-backend /app/docs /app/docs/
 # Copy frontend build from builder2 stage
 COPY --from=builder-admin-frontend /frontend/dist/ /app/resources/admin/
+RUN ln -sf /app/resources/i18n /app/i18n && \
+    ln -sf /app/resources/i18n /i18n && \
+    ln -sf /app/resources/templates /app/templates && \
+    ln -sf /app/resources/templates /templates
 
 
 # Ensure the binary is correctly built and linked
