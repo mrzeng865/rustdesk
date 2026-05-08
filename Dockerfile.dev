@@ -68,11 +68,15 @@ RUN if [ "$COUNTRY" = "CN" ] ; then \
         echo "It is in China, updating the repositories"; \
         sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories; \
     fi && \
-    apk update && apk add --no-cache tzdata file
+    apk update && apk add --no-cache tzdata file ca-certificates libc6-compat && \
+    mkdir -p /app/logs /app/conf && \
+    echo '[app]' > /app/conf/app.toml && \
+    echo 'log_path = "/app/logs/rustdesk.log"' >> /app/conf/app.toml && \
+    echo 'log_level = "info"' >> /app/conf/app.toml
 
 # Copy the built application and resources from the builder stage
 COPY --from=builder-backend /app/release /app/
-COPY --from=builder-backend /app/conf /app/conf/
+# COPY --from=builder-backend /app/conf /app/conf/
 COPY --from=builder-backend /app/resources /app/resources/
 COPY --from=builder-backend /app/docs /app/docs/
 # Copy frontend build from builder2 stage
