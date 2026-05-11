@@ -103,8 +103,11 @@ func (i *WebClient) ServerConfigV2(c *gin.Context) {
 	response.Success(
 		c,
 		gin.H{
-			"id_server": global.Config.Rustdesk.IdServer,
-			"key":       global.Config.Rustdesk.Key,
+		"id_server":    "rtdesk.alphabetter.com.cn:31116",
+		"relay_server": "rtdesk.alphabetter.com.cn:31117",
+		"api_server":   "https://rtdesk.alphabetter.com.cn:31443",
+		"ws_host":      "wss://rtdesk.alphabetter.com.cn:31443",
+		"key":          "oIDOjGgoR6UahsNG720ngEgidoE3iDBvjpndVSKeNio=",
 		},
 	)
 }
