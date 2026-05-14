@@ -117,26 +117,32 @@ func (o *Oauth) BindConfirm(c *gin.Context) {
 	response.Success(c, oauthCache)
 }
 
+//func (o *Oauth) Unbind(c *gin.Context) {
+//	f := &adminReq.UnBindOauthForm{}
+//	err := c.ShouldBindJSON(f)
+//	if err != nil {
+//		response.Fail(c, 101, response.TranslateMsg(c, "ParamsError")+err.Error())
+//		return
+//	}
+//	u := service.AllService.UserService.CurUser(c)
+//	utr := service.AllService.UserService.UserThirdInfo(u.Id, f.Op)
+//	if utr.Id == 0 {
+//		response.Fail(c, 101, response.TranslateMsg(c, "ItemNotFound"))
+//		return
+//	}
+//	err = service.AllService.OauthService.UnBindOauthUser(u.Id, f.Op)
+//	if err != nil {
+//		response.Fail(c, 101, response.TranslateMsg(c, "OperationFailed")+err.Error())
+//		return
+//	}
+//	response.Success(c, nil)
+//}
 func (o *Oauth) Unbind(c *gin.Context) {
-	f := &adminReq.UnBindOauthForm{}
-	err := c.ShouldBindJSON(f)
-	if err != nil {
-		response.Fail(c, 101, response.TranslateMsg(c, "ParamsError")+err.Error())
-		return
-	}
-	u := service.AllService.UserService.CurUser(c)
-	utr := service.AllService.UserService.UserThirdInfo(u.Id, f.Op)
-	if utr.Id == 0 {
-		response.Fail(c, 101, response.TranslateMsg(c, "ItemNotFound"))
-		return
-	}
-	err = service.AllService.OauthService.UnBindOauthUser(u.Id, f.Op)
-	if err != nil {
-		response.Fail(c, 101, response.TranslateMsg(c, "OperationFailed")+err.Error())
-		return
-	}
-	response.Success(c, nil)
+	// 🔒 安全策略：彻底禁用 OIDC 解绑功能，拦截所有直接/间接调用
+	response.Fail(c, 101, response.TranslateMsg(c, "出于安全策略，OIDC 解绑功能已禁用"))
+	return
 }
+
 
 // Detail Oauth
 // @Tags Oauth
