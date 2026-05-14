@@ -169,7 +169,7 @@ func OauthBind(rg *gin.RouterGroup) {
 		aR.POST("/confirm", cont.Confirm)
 		aR.POST("/bind", cont.ToBind)
 		aR.POST("/bindConfirm", cont.BindConfirm)
-		aR.POST("/unbind", cont.Unbind)
+// aR.POST("/unbind", cont.Unbind)  // 🔒 安全策略：已禁用 OIDC 解绑接口
 		aR.GET("/info", cont.Info)
 	}
 	arp := aR.Use(middleware.AdminPrivilege())
